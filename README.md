@@ -42,7 +42,7 @@ jobs:
   # Build Android Release
   build_android:
     name: Build Android App
-    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@master
     with:
       os: ubuntu-latest
       platform: android
@@ -55,7 +55,7 @@ jobs:
   # Build iOS Release
   build_ios:
     name: Build iOS App
-    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@master
     with:
       os: macos-latest
       platform: ios

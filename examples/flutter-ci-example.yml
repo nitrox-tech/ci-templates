@@ -10,7 +10,7 @@ jobs:
   # Build Android Release (APK + AAB)
   build_android:
     name: Build Android App
-    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@master
     with:
       os: ubuntu-latest
       platform: android
@@ -25,7 +25,7 @@ jobs:
   # Build iOS Release
   build_ios:
     name: Build iOS App
-    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@master
     with:
       os: macos-latest
       platform: ios
@@ -39,7 +39,7 @@ jobs:
   # Build Android AAB only (for Play Store)
   build_android_aab_only:
     name: Build Android AAB Only
-    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@master
     with:
       os: ubuntu-latest
       platform: android
@@ -54,7 +54,7 @@ jobs:
   # Build Development Version (no signing)
   build_dev:
     name: Build Development Version
-    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@master
     with:
       os: ubuntu-latest
       platform: android
