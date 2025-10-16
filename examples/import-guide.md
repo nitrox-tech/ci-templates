@@ -66,9 +66,13 @@ jobs:
 | `PROVISIONING_PROFILE` | File provisioning profile đã encode base64 | `base64 -i profile.mobileprovision` |
 | `P12_PASSWORD` | Mật khẩu file .p12 | Nhập mật khẩu |
 
-## Bước 4: Tạo File key.properties (Android)
+## Bước 4: Cấu hình Android (Tự Động)
 
-Tạo file `android/key.properties` trong project Flutter:
+**Không cần tạo file `android/key.properties` trong source code!**
+
+Workflow sẽ tự động tạo file này trong quá trình build dựa trên secret `KEY_PROPERTIES`.
+
+Nội dung secret `KEY_PROPERTIES`:
 
 ```properties
 storePassword=your_store_password
@@ -104,6 +108,8 @@ android {
     }
 }
 ```
+
+**Lưu ý**: File `key.properties` sẽ được tạo tự động trong quá trình build, không cần có sẵn trong source code.
 
 ## Bước 6: Test Workflow
 
