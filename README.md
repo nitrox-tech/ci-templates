@@ -108,6 +108,8 @@ Xem file [import-guide.md](examples/import-guide.md) để có hướng dẫn đ
 | `platform` | Platform to build (android/ios) | - |
 | `build_target` | Main entry point file | lib/main.dart |
 | `artifact_retention_days` | Số ngày giữ artifacts | 7 |
+| `build_apk` | Build APK file (Android only) | true |
+| `build_aab` | Build App Bundle file (Android only) | true |
 
 ## 📝 Ví Dụ Sử Dụng
 

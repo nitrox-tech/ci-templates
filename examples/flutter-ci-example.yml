@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # Build Android Release
+  # Build Android Release (APK + AAB)
   build_android:
     name: Build Android App
     uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
@@ -16,6 +16,8 @@ jobs:
       platform: android
       build_target: lib/main_prod.dart
       artifact_retention_days: 14
+      build_apk: true
+      build_aab: true
     secrets:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
@@ -34,7 +36,22 @@ jobs:
       PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
       P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
 
-  # Build for both platforms (development)
+  # Build Android AAB only (for Play Store)
+  build_android_aab_only:
+    name: Build Android AAB Only
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: ubuntu-latest
+      platform: android
+      build_target: lib/main_prod.dart
+      artifact_retention_days: 14
+      build_apk: false
+      build_aab: true
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+
+  # Build Development Version (no signing)
   build_dev:
     name: Build Development Version
     uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
@@ -43,4 +60,6 @@ jobs:
       platform: android
       build_target: lib/main_dev.dart
       artifact_retention_days: 7
+      build_apk: true
+      build_aab: false
     # No secrets needed for development builds

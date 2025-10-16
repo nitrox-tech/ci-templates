@@ -6,7 +6,7 @@ Copy file `.github/workflows/build-flutter-app.yml` từ repository này vào pr
 
 ## Bước 2: Tạo File CI/CD trong Project
 
-Tạo file `.github/workflows/ci.yml` trong project Flutter của bạn với nội dung:
+### Ví dụ 1: Build đầy đủ (APK + AAB + IPA)
 
 ```yaml
 name: Flutter App CI/CD Pipeline
@@ -18,7 +18,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # Build Android Release
+  # Build Android Release (APK + AAB)
   build_android:
     name: Build Android App
     uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
@@ -27,6 +27,8 @@ jobs:
       platform: android
       build_target: lib/main_prod.dart
       artifact_retention_days: 14
+      build_apk: true
+      build_aab: true
     secrets:
       KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
       KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
@@ -40,6 +42,47 @@ jobs:
       platform: ios
       build_target: lib/main_prod.dart
       artifact_retention_days: 14
+    secrets:
+      P12_BASE64: ${{ secrets.P12_BASE64 }}
+      PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+```
+
+### Ví dụ 2: Chỉ build AAB + IPA (như LED Banner)
+
+```yaml
+name: Flutter App CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "released/**" ]
+
+jobs:
+  # Build Android AAB only
+  build_android_aab:
+    name: Build Android AAB
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: ubuntu-latest
+      platform: android
+      build_target: lib/main.dart
+      artifact_retention_days: 30
+      build_apk: false
+      build_aab: true
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+
+  # Build iOS IPA
+  build_ios:
+    name: Build iOS IPA
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: macos-latest
+      platform: ios
+      build_target: lib/main.dart
+      artifact_retention_days: 30
     secrets:
       P12_BASE64: ${{ secrets.P12_BASE64 }}
       PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
