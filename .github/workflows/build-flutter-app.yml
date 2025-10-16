@@ -32,6 +32,11 @@ on:
         required: false
         type: boolean
         default: true
+      flutter_version:
+        description: 'Flutter version to use'
+        required: false
+        type: string
+        default: '3.24.0'
     secrets:
       # Android secrets
       KEYSTORE_BASE64:
@@ -75,7 +80,7 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.24.0'
+        flutter-version: ${{ inputs.flutter_version }}
         channel: 'stable'
 
     - name: Get dependencies
