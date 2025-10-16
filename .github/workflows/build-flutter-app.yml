@@ -88,7 +88,7 @@ jobs:
       run: flutter test
 
     - name: Setup Android keystore (Android only)
-      if: inputs.platform == 'android' && secrets.KEYSTORE_BASE64 != ''
+      if: inputs.platform == 'android'
       run: |
         # Decode keystore file
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
@@ -125,7 +125,7 @@ jobs:
         fi
 
     - name: Setup iOS certificates (iOS only)
-      if: inputs.platform == 'ios' && secrets.P12_BASE64 != ''
+      if: inputs.platform == 'ios'
       run: |
         # Create keychain
         security create-keychain -p "" build.keychain
