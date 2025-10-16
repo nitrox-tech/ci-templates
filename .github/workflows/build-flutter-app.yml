@@ -42,6 +42,11 @@ on:
         required: false
         type: boolean
         default: false
+      build_ios:
+        description: 'Build iOS IPA'
+        required: false
+        type: boolean
+        default: true
     secrets:
       # Android secrets
       KEYSTORE_BASE64:
@@ -149,7 +154,7 @@ jobs:
         fi
 
     - name: Setup iOS certificates (iOS only)
-      if: inputs.platform == 'ios'
+      if: inputs.platform == 'ios' && inputs.build_ios == true
       run: |
         # Create keychain
         security create-keychain -p "" build.keychain
@@ -169,7 +174,7 @@ jobs:
         security find-identity -v -p codesigning build.keychain
 
     - name: Build iOS IPA
-      if: inputs.platform == 'ios'
+      if: inputs.platform == 'ios' && inputs.build_ios == true
       run: |
         flutter build ios --release --target ${{ inputs.build_target }}
         cd ios
@@ -195,7 +200,7 @@ jobs:
         overwrite: true
 
     - name: Upload iOS IPA
-      if: inputs.platform == 'ios'
+      if: inputs.platform == 'ios' && inputs.build_ios == true
       uses: actions/upload-artifact@v4
       with:
         name: ios-ipa-${{ steps.version.outputs.version }}.ipa
