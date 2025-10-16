@@ -50,6 +50,9 @@ on:
       P12_PASSWORD:
         description: 'Password for P12 certificate'
         required: false
+      PERSONAL_ACCESS_TOKEN:
+        description: 'Personal Access Token for private repository access'
+        required: false
 
 jobs:
   build:
@@ -58,6 +61,13 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+    - name: Configure Git for private repositories
+      run: |
+        git config --global url."https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/".insteadOf "git@github.com:"
+        git config --global url."https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
