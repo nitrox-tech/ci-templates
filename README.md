@@ -1,135 +1,125 @@
-# CI Templates
+# Flutter CI/CD Templates
 
-This repository contains CI/CD templates for building Android and iOS applications.
+Thư viện GitHub Actions cung cấp Reusable Workflow để chuẩn hóa quy trình build Flutter cho Android và iOS, giảm thiểu sự lặp lại code trong các dự án.
 
-## Overview
+## 🚀 Tính Năng
 
-This project provides reusable CI/CD pipeline templates that can be used across different mobile application projects to automate the build, test, and deployment processes.
+- ✅ Build Android APK và App Bundle
+- ✅ Build iOS IPA
+- ✅ Tự động setup certificates và keystore
+- ✅ Chạy tests trước khi build
+- ✅ Upload artifacts với retention tùy chỉnh
+- ✅ Support multiple entry points (main_dev.dart, main_prod.dart)
 
-## Features
-
-- **Android Build Templates**: Automated Android app building and testing
-- **iOS Build Templates**: Automated iOS app building and testing
-- **Cross-platform Support**: Templates for React Native, Flutter, and native projects
-- **Multiple CI Platforms**: Support for GitHub Actions, GitLab CI, and other CI/CD platforms
-
-## Supported Platforms
-
-- Android (Java/Kotlin)
-- iOS (Swift/Objective-C)
-- React Native
-- Flutter
-- Xamarin
-
-## CI/CD Platforms
-
-- GitHub Actions
-- GitLab CI/CD
-- Jenkins
-- Bitrise
-- CircleCI
-
-## Getting Started
-
-1. Clone this repository
-2. Choose the appropriate template for your project
-3. Copy the template files to your project
-4. Customize the configuration according to your project needs
-5. Set up the required environment variables and secrets
-
-## Templates Structure
+## 📁 Cấu Trúc Project
 
 ```
-├── android/
-│   ├── github-actions/
-│   ├── gitlab-ci/
-│   └── jenkins/
-├── ios/
-│   ├── github-actions/
-│   ├── gitlab-ci/
-│   └── jenkins/
-├── react-native/
-│   ├── github-actions/
-│   └── gitlab-ci/
-├── flutter/
-│   ├── github-actions/
-│   └── gitlab-ci/
-└── shared/
-    ├── scripts/
-    └── configs/
+├── .github/workflows/
+│   └── build-flutter-app.yml    # Reusable workflow chính
+├── examples/
+│   ├── flutter-ci-example.yml  # Ví dụ sử dụng
+│   └── import-guide.md         # Hướng dẫn chi tiết
+└── README.md
 ```
 
-## Usage
+## 🛠️ Cách Sử Dụng
 
-### Android Projects
+### Bước 1: Tạo File CI/CD trong Project Flutter
 
-For Android projects, use the templates in the `android/` directory:
+Tạo file `.github/workflows/ci.yml`:
 
-```bash
-# Copy GitHub Actions template
-cp android/github-actions/.github/workflows/android-ci.yml .github/workflows/
+```yaml
+name: Flutter App CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Build Android Release
+  build_android:
+    name: Build Android App
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: ubuntu-latest
+      platform: android
+      build_target: lib/main_prod.dart
+      artifact_retention_days: 14
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+
+  # Build iOS Release
+  build_ios:
+    name: Build iOS App
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: macos-latest
+      platform: ios
+      build_target: lib/main_prod.dart
+      artifact_retention_days: 14
+    secrets:
+      P12_BASE64: ${{ secrets.P12_BASE64 }}
+      PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
 ```
 
-### iOS Projects
+### Bước 2: Setup GitHub Secrets
 
-For iOS projects, use the templates in the `ios/` directory:
+#### Cho Android:
+| Secret Name | Mô tả | Cách tạo |
+|-------------|-------|----------|
+| `KEYSTORE_BASE64` | File keystore đã encode base64 | `base64 -i your-keystore.jks` |
+| `KEY_PROPERTIES` | Nội dung file key.properties | Copy nội dung file |
 
-```bash
-# Copy GitHub Actions template
-cp ios/github-actions/.github/workflows/ios-ci.yml .github/workflows/
+#### Cho iOS:
+| Secret Name | Mô tả | Cách tạo |
+|-------------|-------|----------|
+| `P12_BASE64` | File certificate .p12 đã encode base64 | `base64 -i certificate.p12` |
+| `PROVISIONING_PROFILE` | File provisioning profile đã encode base64 | `base64 -i profile.mobileprovision` |
+| `P12_PASSWORD` | Mật khẩu file .p12 | Nhập mật khẩu |
+
+### Bước 3: Tạo File key.properties (Android)
+
+Tạo file `android/key.properties`:
+
+```properties
+storePassword=your_store_password
+keyPassword=your_key_password
+keyAlias=your_key_alias
+storeFile=../app/keystore.jks
 ```
 
-### React Native Projects
+## 📖 Hướng Dẫn Chi Tiết
 
-For React Native projects, use the templates in the `react-native/` directory:
+Xem file [import-guide.md](examples/import-guide.md) để có hướng dẫn đầy đủ về:
+- Cách setup Android keystore
+- Cách setup iOS certificates
+- Troubleshooting các lỗi thường gặp
+- Cấu hình build.gradle
 
-```bash
-# Copy GitHub Actions template
-cp react-native/github-actions/.github/workflows/react-native-ci.yml .github/workflows/
-```
+## 🔧 Parameters
 
-### Flutter Projects
+| Parameter | Mô tả | Mặc định |
+|-----------|-------|----------|
+| `os` | Operating system (ubuntu-latest/macos-latest) | ubuntu-latest |
+| `platform` | Platform to build (android/ios) | - |
+| `build_target` | Main entry point file | lib/main.dart |
+| `artifact_retention_days` | Số ngày giữ artifacts | 7 |
 
-For Flutter projects, use the templates in the `flutter/` directory:
+## 📝 Ví Dụ Sử Dụng
 
-```bash
-# Copy GitHub Actions template
-cp flutter/github-actions/.github/workflows/flutter-ci.yml .github/workflows/
-```
+Xem file [flutter-ci-example.yml](examples/flutter-ci-example.yml) để có ví dụ đầy đủ về cách sử dụng workflow.
 
-## Configuration
+## 🤝 Contributing
 
-Each template includes configuration files that need to be customized:
+1. Fork repository
+2. Tạo feature branch
+3. Commit changes
+4. Push và tạo Pull Request
 
-- Environment variables
-- Build configurations
-- Test configurations
-- Deployment settings
+## 📄 License
 
-## Requirements
-
-- Node.js (for React Native projects)
-- Flutter SDK (for Flutter projects)
-- Android SDK (for Android projects)
-- Xcode (for iOS projects)
-- Appropriate CI/CD platform access
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test the templates
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For questions and support, please open an issue in this repository or contact the development team.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a list of changes and updates.
+MIT License - xem file LICENSE để biết thêm chi tiết.

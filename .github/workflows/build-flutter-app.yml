@@ -1,0 +1,130 @@
+name: Build Flutter App
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: 'Operating system to run on'
+        required: true
+        type: string
+        default: 'ubuntu-latest'
+      platform:
+        description: 'Platform to build for (android/ios)'
+        required: true
+        type: string
+      build_target:
+        description: 'Main entry point file'
+        required: false
+        type: string
+        default: 'lib/main.dart'
+      artifact_retention_days:
+        description: 'Number of days to retain artifacts'
+        required: false
+        type: number
+        default: 7
+    secrets:
+      # Android secrets
+      KEYSTORE_BASE64:
+        description: 'Base64 encoded keystore file'
+        required: false
+      KEY_PROPERTIES:
+        description: 'Key properties file content'
+        required: false
+      # iOS secrets
+      P12_BASE64:
+        description: 'Base64 encoded P12 certificate'
+        required: false
+      PROVISIONING_PROFILE:
+        description: 'Base64 encoded provisioning profile'
+        required: false
+      P12_PASSWORD:
+        description: 'Password for P12 certificate'
+        required: false
+
+jobs:
+  build:
+    runs-on: ${{ inputs.os }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+        channel: 'stable'
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Run tests
+      run: flutter test
+
+    - name: Setup Android keystore (Android only)
+      if: inputs.platform == 'android' && secrets.KEYSTORE_BASE64 != ''
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+        echo "${{ secrets.KEY_PROPERTIES }}" > android/key.properties
+
+    - name: Build Android APK
+      if: inputs.platform == 'android'
+      run: |
+        flutter build apk --release --target ${{ inputs.build_target }}
+
+    - name: Build Android App Bundle
+      if: inputs.platform == 'android'
+      run: |
+        flutter build appbundle --release --target ${{ inputs.build_target }}
+
+    - name: Setup iOS certificates (iOS only)
+      if: inputs.platform == 'ios' && secrets.P12_BASE64 != ''
+      run: |
+        # Create keychain
+        security create-keychain -p "" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "" build.keychain
+        
+        # Import certificate
+        echo "${{ secrets.P12_BASE64 }}" | base64 --decode > certificate.p12
+        security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
+        
+        # Import provisioning profile
+        echo "${{ secrets.PROVISIONING_PROFILE }}" | base64 --decode > profile.mobileprovision
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+        
+        # Set certificate identity
+        security find-identity -v -p codesigning build.keychain
+
+    - name: Build iOS IPA
+      if: inputs.platform == 'ios'
+      run: |
+        flutter build ios --release --target ${{ inputs.build_target }}
+        cd ios
+        xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -destination generic/platform=iOS -archivePath build/Runner.xcarchive archive
+        xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportPath build/ -exportOptionsPlist ExportOptions.plist
+
+    - name: Upload Android APK
+      if: inputs.platform == 'android'
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: ${{ inputs.artifact_retention_days }}
+
+    - name: Upload Android App Bundle
+      if: inputs.platform == 'android'
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-appbundle
+        path: build/app/outputs/bundle/release/app-release.aab
+        retention-days: ${{ inputs.artifact_retention_days }}
+
+    - name: Upload iOS IPA
+      if: inputs.platform == 'ios'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-ipa
+        path: ios/build/Runner.ipa
+        retention-days: ${{ inputs.artifact_retention_days }}

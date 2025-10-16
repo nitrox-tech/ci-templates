@@ -1,0 +1,46 @@
+name: Flutter App CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Build Android Release
+  build_android:
+    name: Build Android App
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: ubuntu-latest
+      platform: android
+      build_target: lib/main_prod.dart
+      artifact_retention_days: 14
+    secrets:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+
+  # Build iOS Release
+  build_ios:
+    name: Build iOS App
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: macos-latest
+      platform: ios
+      build_target: lib/main_prod.dart
+      artifact_retention_days: 14
+    secrets:
+      P12_BASE64: ${{ secrets.P12_BASE64 }}
+      PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+
+  # Build for both platforms (development)
+  build_dev:
+    name: Build Development Version
+    uses: nitrox-tech/ci-templates/.github/workflows/build-flutter-app.yml@main
+    with:
+      os: ubuntu-latest
+      platform: android
+      build_target: lib/main_dev.dart
+      artifact_retention_days: 7
+    # No secrets needed for development builds
