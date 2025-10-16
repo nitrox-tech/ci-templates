@@ -37,6 +37,11 @@ on:
         required: false
         type: string
         default: '3.24.0'
+      run_tests:
+        description: 'Run Flutter tests'
+        required: false
+        type: boolean
+        default: false
     secrets:
       # Android secrets
       KEYSTORE_BASE64:
@@ -103,6 +108,7 @@ jobs:
         fi
 
     - name: Run tests
+      if: inputs.run_tests == true
       run: flutter test
 
     - name: Setup Android keystore (Android only)
