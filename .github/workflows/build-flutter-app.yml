@@ -68,6 +68,9 @@ jobs:
       run: |
         git config --global url."https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/".insteadOf "git@github.com:"
         git config --global url."https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/".insteadOf "https://github.com/"
+        echo "Git configuration updated for private repository access"
+        echo "Git config list:"
+        git config --global --list | grep url
 
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
