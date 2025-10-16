@@ -10,6 +10,7 @@ Thư viện GitHub Actions cung cấp Reusable Workflow để chuẩn hóa quy t
 - ✅ Chạy tests trước khi build
 - ✅ Upload artifacts với retention tùy chỉnh
 - ✅ Support multiple entry points (main_dev.dart, main_prod.dart)
+- ✅ **Tự động đặt tên file theo version** từ pubspec.yaml
 
 ## 📁 Cấu Trúc Project
 
@@ -110,6 +111,26 @@ Xem file [import-guide.md](examples/import-guide.md) để có hướng dẫn đ
 | `artifact_retention_days` | Số ngày giữ artifacts | 7 |
 | `build_apk` | Build APK file (Android only) | true |
 | `build_aab` | Build App Bundle file (Android only) | true |
+
+## 📦 Artifact Naming
+
+Workflow tự động đặt tên artifacts theo version:
+
+### **Logic Version**:
+- **Tag build** (`released/v1.0.0`): Sử dụng version từ tag → `v1.0.0`
+- **Push/PR build**: Sử dụng version từ `pubspec.yaml` → `1.0.0+1`
+
+### **Naming Pattern**:
+
+| Artifact Type | Naming Pattern | Ví dụ (Tag) | Ví dụ (Push) |
+|---------------|----------------|-------------|--------------|
+| Android APK | `android-apk-{version}.apk` | `android-apk-v1.0.0.apk` | `android-apk-1.0.0+1.apk` |
+| Android AAB | `android-appbundle-{version}.aab` | `android-appbundle-v1.0.0.aab` | `android-appbundle-1.0.0+1.aab` |
+| iOS IPA | `ios-ipa-{version}.ipa` | `ios-ipa-v1.0.0.ipa` | `ios-ipa-1.0.0+1.ipa` |
+
+### **Features**:
+- ✅ **Overwrite**: Ghi đè file cũ cùng tên
+- ✅ **Version tracking**: Dễ dàng identify version
 
 ## 📝 Ví Dụ Sử Dụng
 

@@ -68,6 +68,22 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
 
+    - name: Extract app version
+      id: version
+      run: |
+        # Check if this is a tag build (released/*)
+        if [[ "${{ github.ref }}" == refs/tags/released/* ]]; then
+          # Extract version from tag (released/v1.0.0 -> v1.0.0)
+          VERSION=$(echo "${{ github.ref }}" | sed 's/refs\/tags\/released\///')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version from tag: $VERSION"
+        else
+          # Use version from pubspec.yaml
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version from pubspec.yaml: $VERSION"
+        fi
+
     - name: Run tests
       run: flutter test
 
@@ -140,22 +156,25 @@ jobs:
       if: inputs.platform == 'android' && inputs.build_apk == true
       uses: actions/upload-artifact@v4
       with:
-        name: android-apk
+        name: android-apk-${{ steps.version.outputs.version }}.apk
         path: build/app/outputs/flutter-apk/app-release.apk
         retention-days: ${{ inputs.artifact_retention_days }}
+        overwrite: true
 
     - name: Upload Android App Bundle
       if: inputs.platform == 'android' && inputs.build_aab == true
       uses: actions/upload-artifact@v4
       with:
-        name: android-appbundle
+        name: android-appbundle-${{ steps.version.outputs.version }}.aab
         path: build/app/outputs/bundle/release/app-release.aab
         retention-days: ${{ inputs.artifact_retention_days }}
+        overwrite: true
 
     - name: Upload iOS IPA
       if: inputs.platform == 'ios'
       uses: actions/upload-artifact@v4
       with:
-        name: ios-ipa
+        name: ios-ipa-${{ steps.version.outputs.version }}.ipa
         path: ios/build/Runner.ipa
         retention-days: ${{ inputs.artifact_retention_days }}
+        overwrite: true
