@@ -336,7 +336,6 @@ jobs:
           -archivePath build/Runner.xcarchive \
           CODE_SIGN_STYLE=Manual \
           CODE_SIGN_IDENTITY="$CERT_IDENTITY" \
-          PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
           DEVELOPMENT_TEAM="S23HMD548J" \
           archive
         echo "✅ Xcode archive completed"
