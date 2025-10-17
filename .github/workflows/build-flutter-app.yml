@@ -120,9 +120,18 @@ jobs:
         rm -rf Pods/
         rm -f Podfile.lock
         
-        # Update iOS deployment target to 12.0
-        echo "Updating iOS deployment target to 12.0..."
-        sed -i '' 's/platform :ios, .*/platform :ios, "12.0"/' Podfile
+        # Update iOS deployment target to 13.0
+        echo "Updating iOS deployment target to 13.0..."
+        sed -i '' 's/platform :ios, .*/platform :ios, "13.0"/' Podfile
+        
+        # Force update all Pods to iOS 13.0+
+        echo "post_install do |installer|" >> Podfile
+        echo "  installer.pods_project.targets.each do |target|" >> Podfile
+        echo "    target.build_configurations.each do |config|" >> Podfile
+        echo "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'" >> Podfile
+        echo "    end" >> Podfile
+        echo "  end" >> Podfile
+        echo "end" >> Podfile
         
         pod repo update
         pod install
@@ -312,6 +321,10 @@ jobs:
         echo "Removing provisioning profiles from Pods project..."
         sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = .*;//' ios/Pods/Pods.xcodeproj/project.pbxproj
         sed -i '' 's/PROVISIONING_PROFILE = .*;//' ios/Pods/Pods.xcodeproj/project.pbxproj
+        
+        # Set DEVELOPMENT_TEAM for Runner target
+        echo "Setting DEVELOPMENT_TEAM for Runner target..."
+        sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = S23HMD548J;/' ios/Runner.xcodeproj/project.pbxproj
         
         # Get certificate identity
         CERT_IDENTITY=$(security find-identity -v -p codesigning build2.keychain | grep "Apple Distribution" | awk '{print $2}')
