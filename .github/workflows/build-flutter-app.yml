@@ -47,6 +47,10 @@ on:
         required: false
         type: boolean
         default: true
+      bundle_id:
+        description: 'iOS Bundle ID (e.g., com.example.app)'
+        required: false
+        type: string
     secrets:
       # Android secrets
       KEYSTORE_BASE64:
@@ -221,18 +225,24 @@ jobs:
         # Check available certificates before build
         echo "=== Available certificates before build ==="
         security find-identity -v -p codesigning build.keychain
-        
-        # Extract Bundle ID from Provisioning Profile
-        echo "=== Extracting Bundle ID from Provisioning Profile ==="
-        BUNDLE_ID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "application-identifier" | sed 's/.*\.//' | tr -d '"' | tr -d ' ')
-        echo "Extracted Bundle ID: $BUNDLE_ID"
+        a
+        # Set Bundle ID
+        if [ -n "${{ inputs.bundle_id }}" ]; then
+          echo "=== Using Bundle ID from input parameter ==="
+          BUNDLE_ID="${{ inputs.bundle_id }}"
+          echo "Bundle ID: $BUNDLE_ID"
+        else
+          echo "=== Extracting Bundle ID from Provisioning Profile ==="
+          BUNDLE_ID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "application-identifier" | sed 's/.*S23HMD548J\.//' | tr -d '"' | tr -d ' ')
+          echo "Extracted Bundle ID: $BUNDLE_ID"
+        fi
         
         # Check current Bundle ID in Info.plist
         echo "=== Current Bundle ID in Info.plist ==="
         plutil -p ios/Runner/Info.plist | grep CFBundleIdentifier
         
-        # Set Bundle ID from Provisioning Profile
-        echo "Setting Bundle ID from Provisioning Profile..."
+        # Set Bundle ID
+        echo "Setting Bundle ID..."
         plutil -replace CFBundleIdentifier -string "$BUNDLE_ID" ios/Runner/Info.plist
         
         # Verify Bundle ID
