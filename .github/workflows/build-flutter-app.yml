@@ -156,30 +156,94 @@ jobs:
     - name: Setup iOS certificates (iOS only)
       if: inputs.platform == 'ios' && inputs.build_ios == true
       run: |
+        echo "=== Starting iOS Certificate Setup ==="
+        
         # Create keychain
+        echo "Creating keychain..."
         security create-keychain -p "" build.keychain
         security default-keychain -s build.keychain
         security unlock-keychain -p "" build.keychain
+        echo "✅ Keychain created and unlocked"
         
         # Import certificate
+        echo "Importing P12 certificate..."
         echo "${{ secrets.P12_BASE64 }}" | base64 --decode > certificate.p12
+        echo "P12 file size: $(ls -la certificate.p12 | awk '{print $5}') bytes"
+        
         security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
+        echo "✅ P12 certificate imported"
         
         # Import provisioning profile
+        echo "Importing provisioning profile..."
         echo "${{ secrets.PROVISIONING_PROFILE }}" | base64 --decode > profile.mobileprovision
+        echo "Provisioning profile size: $(ls -la profile.mobileprovision | awk '{print $5}') bytes"
+        
         mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
         cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+        echo "✅ Provisioning profile copied"
         
         # Set certificate identity
+        echo "Finding certificate identity..."
         security find-identity -v -p codesigning build.keychain
+        
+        # Set keychain partition list (important for codesign)
+        echo "Setting keychain partition list..."
+        security set-key-partition-list -S apple-tool:,apple: -k "" build.keychain
+        echo "✅ Keychain partition list set"
+        
+        # Debug: List all certificates
+        echo "=== All certificates in keychain ==="
+        security find-identity -v build.keychain
+        
+        # Debug: Check provisioning profiles
+        echo "=== Provisioning profiles ==="
+        ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+        
+        # Debug: Check keychain settings
+        echo "=== Keychain settings ==="
+        security show-keychain-info build.keychain
+        
+        # Debug: Set keychain timeout
+        security set-keychain-settings -t 3600 -l build.keychain
+        echo "✅ Keychain timeout set to 3600 seconds"
+        
+        echo "=== iOS Certificate Setup Complete ==="
 
     - name: Build iOS IPA
       if: inputs.platform == 'ios' && inputs.build_ios == true
       run: |
+        echo "=== Starting iOS Build ==="
+        
+        # Check Flutter doctor
+        echo "Flutter doctor:"
+        flutter doctor -v
+        
+        # Check available certificates before build
+        echo "=== Available certificates before build ==="
+        security find-identity -v -p codesigning build.keychain
+        
+        # Build Flutter iOS
+        echo "Building Flutter iOS app..."
         flutter build ios --release --target ${{ inputs.build_target }}
+        echo "✅ Flutter iOS build completed"
+        
+        # Build Xcode archive
+        echo "Building Xcode archive..."
         cd ios
         xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -destination generic/platform=iOS -archivePath build/Runner.xcarchive archive
+        echo "✅ Xcode archive completed"
+        
+        # Export IPA
+        echo "Exporting IPA..."
         xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportPath build/ -exportOptionsPlist ExportOptions.plist
+        echo "✅ IPA export completed"
+        
+        # Check generated files
+        echo "=== Generated files ==="
+        ls -la build/
+        ls -la build/*.ipa
+        
+        echo "=== iOS Build Complete ==="
 
     - name: Upload Android APK
       if: inputs.platform == 'android' && inputs.build_apk == true
