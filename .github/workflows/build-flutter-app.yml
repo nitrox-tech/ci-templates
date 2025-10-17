@@ -225,7 +225,6 @@ jobs:
         # Check available certificates before build
         echo "=== Available certificates before build ==="
         security find-identity -v -p codesigning build.keychain
-        a
         # Set Bundle ID
         if [ -n "${{ inputs.bundle_id }}" ]; then
           echo "=== Using Bundle ID from input parameter ==="
