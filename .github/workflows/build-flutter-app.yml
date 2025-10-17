@@ -112,6 +112,12 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
 
+    - name: Update CocoaPods specs (iOS only)
+      if: inputs.platform == 'ios' && inputs.build_ios == true
+      run: |
+        cd ios
+        pod repo update
+
     - name: Extract app version
       id: version
       run: |
