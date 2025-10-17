@@ -161,6 +161,8 @@ jobs:
       if: inputs.platform == 'ios' && inputs.build_ios == true
       run: |
         echo "=== Starting iOS Certificate Setup ==="
+        echo "Platform: ${{ inputs.platform }}"
+        echo "Build iOS: ${{ inputs.build_ios }}"
         
         # Create keychain
         echo "Creating keychain..."
@@ -234,6 +236,15 @@ jobs:
         # Check available certificates before build
         echo "=== Available certificates before build ==="
         security find-identity -v -p codesigning build.keychain
+        
+        # Check if build.keychain exists
+        echo "=== Checking build.keychain ==="
+        ls -la build.keychain
+        security show-keychain-info build.keychain
+        
+        # List all keychains
+        echo "=== All keychains ==="
+        security list-keychains
         # Set Bundle ID
         if [ -n "${{ inputs.bundle_id }}" ]; then
           echo "=== Using Bundle ID from input parameter ==="
@@ -272,6 +283,11 @@ jobs:
         # Get provisioning profile UUID
         PROFILE_UUID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "UUID" | awk '{print $3}' | tr -d '"')
         echo "Using Provisioning Profile UUID: $PROFILE_UUID"
+        
+a        # Set keychain for Flutter
+        echo "Setting keychain for Flutter..."
+        export KEYCHAIN_PATH=$(pwd)/build.keychain
+        export KEYCHAIN_PASSWORD=""
         
         # Build Flutter iOS with manual code signing
         echo "Building Flutter iOS app with manual code signing..."
