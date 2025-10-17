@@ -224,7 +224,7 @@ jobs:
         
         # Extract Bundle ID from Provisioning Profile
         echo "=== Extracting Bundle ID from Provisioning Profile ==="
-        BUNDLE_ID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep -A1 "application-identifier" | tail -1 | sed 's/.*\.//' | tr -d '"')
+        BUNDLE_ID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "application-identifier" | sed 's/.*\.//' | tr -d '"' | tr -d ' ')
         echo "Extracted Bundle ID: $BUNDLE_ID"
         
         # Check current Bundle ID in Info.plist
