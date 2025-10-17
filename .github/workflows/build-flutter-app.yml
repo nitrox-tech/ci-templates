@@ -124,7 +124,12 @@ jobs:
         echo "Updating iOS deployment target to 13.0..."
         sed -i '' 's/platform :ios, .*/platform :ios, "13.0"/' Podfile
         
-        # Force update all Pods to iOS 13.0+
+        # Remove existing post_install hook and add new one
+        echo "Updating post_install hook..."
+        sed -i '' '/post_install do/,/^end$/d' Podfile
+        
+        # Add new post_install hook
+        echo "" >> Podfile
         echo "post_install do |installer|" >> Podfile
         echo "  installer.pods_project.targets.each do |target|" >> Podfile
         echo "    target.build_configurations.each do |config|" >> Podfile
@@ -133,8 +138,16 @@ jobs:
         echo "  end" >> Podfile
         echo "end" >> Podfile
         
+        # Show Podfile content for debugging
+        echo "=== Podfile content ==="
+        cat Podfile
+        
         pod repo update
         pod install
+        
+        # Debug: Check if post_install worked
+        echo "=== Checking Pods deployment targets ==="
+        find Pods -name "*.pbxproj" -exec grep -l "IPHONEOS_DEPLOYMENT_TARGET" {} \; | head -5 | xargs -I {} sh -c 'echo "=== {} ===" && grep "IPHONEOS_DEPLOYMENT_TARGET" "{}" | head -3'
 
     - name: Extract app version
       id: version
@@ -331,6 +344,10 @@ jobs:
         sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' ios/Runner.xcodeproj/project.pbxproj
         sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
         sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Distribution";/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
+        
+        # Set CODE_SIGN_IDENTITY to empty for manual signing
+        echo "Setting CODE_SIGN_IDENTITY to empty..."
+        sed -i '' 's/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
         
         # Get certificate identity
         CERT_IDENTITY=$(security find-identity -v -p codesigning build2.keychain | grep "Apple Distribution" | awk '{print $2}')
