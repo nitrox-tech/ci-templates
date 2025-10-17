@@ -116,7 +116,11 @@ jobs:
       if: inputs.platform == 'ios' && inputs.build_ios == true
       run: |
         cd ios
+        # Clean CocoaPods cache and lock files
+        rm -rf Pods/
+        rm -f Podfile.lock
         pod repo update
+        pod install
 
     - name: Extract app version
       id: version
