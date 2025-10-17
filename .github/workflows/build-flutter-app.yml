@@ -243,6 +243,8 @@ jobs:
         
         # Recreate keychain for this step
         echo "=== Recreating keychain ==="
+        # Delete existing keychain if it exists
+        security delete-keychain build.keychain 2>/dev/null || true
         security create-keychain -p "" build.keychain
         security default-keychain -s build.keychain
         security unlock-keychain -p "" build.keychain
