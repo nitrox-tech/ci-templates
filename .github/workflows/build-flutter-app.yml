@@ -222,6 +222,14 @@ jobs:
         echo "=== Available certificates before build ==="
         security find-identity -v -p codesigning build.keychain
         
+        # Check Bundle ID
+        echo "=== Bundle ID in Info.plist ==="
+        plutil -p ios/Runner/Info.plist | grep CFBundleIdentifier
+        
+        # Check provisioning profile details
+        echo "=== Provisioning Profile Details ==="
+        security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p -
+        
         # Build Flutter iOS
         echo "Building Flutter iOS app..."
         flutter build ios --release --target ${{ inputs.build_target }}
