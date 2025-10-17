@@ -326,6 +326,12 @@ jobs:
         echo "Setting DEVELOPMENT_TEAM for Runner target..."
         sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = S23HMD548J;/' ios/Runner.xcodeproj/project.pbxproj
         
+        # Disable automatic signing completely
+        echo "Disabling automatic signing completely..."
+        sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' ios/Runner.xcodeproj/project.pbxproj
+        sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
+        sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Distribution";/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
+        
         # Get certificate identity
         CERT_IDENTITY=$(security find-identity -v -p codesigning build2.keychain | grep "Apple Distribution" | awk '{print $2}')
         echo "Using Certificate Identity: $CERT_IDENTITY"
