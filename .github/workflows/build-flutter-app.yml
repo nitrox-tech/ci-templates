@@ -222,8 +222,21 @@ jobs:
         echo "=== Available certificates before build ==="
         security find-identity -v -p codesigning build.keychain
         
-        # Check Bundle ID
-        echo "=== Bundle ID in Info.plist ==="
+        # Extract Bundle ID from Provisioning Profile
+        echo "=== Extracting Bundle ID from Provisioning Profile ==="
+        BUNDLE_ID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep -A1 "application-identifier" | tail -1 | sed 's/.*\.//' | tr -d '"')
+        echo "Extracted Bundle ID: $BUNDLE_ID"
+        
+        # Check current Bundle ID in Info.plist
+        echo "=== Current Bundle ID in Info.plist ==="
+        plutil -p ios/Runner/Info.plist | grep CFBundleIdentifier
+        
+        # Set Bundle ID from Provisioning Profile
+        echo "Setting Bundle ID from Provisioning Profile..."
+        plutil -replace CFBundleIdentifier -string "$BUNDLE_ID" ios/Runner/Info.plist
+        
+        # Verify Bundle ID
+        echo "=== Bundle ID after setting ==="
         plutil -p ios/Runner/Info.plist | grep CFBundleIdentifier
         
         # Check provisioning profile details
