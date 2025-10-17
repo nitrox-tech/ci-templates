@@ -192,8 +192,17 @@ jobs:
         
         # Set keychain partition list (important for codesign)
         echo "Setting keychain partition list..."
-        security set-key-partition-list -S apple-tool:,apple: -k "" build.keychain
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -k "" build.keychain
         echo "✅ Keychain partition list set"
+        
+        # Set keychain search list
+        echo "Setting keychain search list..."
+        security list-keychains -d user -s build.keychain
+        echo "✅ Keychain search list set"
+        
+        # Get certificate identity
+        CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Apple Distribution" | awk '{print $2}')
+        echo "Certificate Identity: $CERT_IDENTITY"
         
         # Debug: List all certificates
         echo "=== All certificates in keychain ==="
@@ -252,15 +261,43 @@ jobs:
         echo "=== Provisioning Profile Details ==="
         security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p -
         
-        # Build Flutter iOS
-        echo "Building Flutter iOS app..."
-        flutter build ios --release --target ${{ inputs.build_target }}
+        # Disable automatic code signing
+        echo "Disabling automatic code signing..."
+        sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' ios/Runner.xcodeproj/project.pbxproj
+        
+        # Get certificate identity
+        CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Apple Distribution" | awk '{print $2}')
+        echo "Using Certificate Identity: $CERT_IDENTITY"
+        
+        # Get provisioning profile UUID
+        PROFILE_UUID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "UUID" | awk '{print $3}' | tr -d '"')
+        echo "Using Provisioning Profile UUID: $PROFILE_UUID"
+        
+        # Build Flutter iOS with manual code signing
+        echo "Building Flutter iOS app with manual code signing..."
+        flutter build ios --release --target ${{ inputs.build_target }} --no-codesign
         echo "✅ Flutter iOS build completed"
         
-        # Build Xcode archive
-        echo "Building Xcode archive..."
+        # Build Xcode archive with manual code signing
+        echo "Building Xcode archive with manual code signing..."
         cd ios
-        xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -destination generic/platform=iOS -archivePath build/Runner.xcarchive archive
+        
+        # Get certificate identity
+        CERT_IDENTITY=$(security find-identity -v -p codesigning ~/Library/Keychains/build.keychain-db | grep "Apple Distribution" | awk '{print $2}')
+        
+        # Get provisioning profile UUID
+        PROFILE_UUID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "UUID" | awk '{print $3}' | tr -d '"')
+        
+        xcodebuild -workspace Runner.xcworkspace \
+          -scheme Runner \
+          -configuration Release \
+          -destination generic/platform=iOS \
+          -archivePath build/Runner.xcarchive \
+          CODE_SIGN_STYLE=Manual \
+          CODE_SIGN_IDENTITY="$CERT_IDENTITY" \
+          PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+          DEVELOPMENT_TEAM="S23HMD548J" \
+          archive
         echo "✅ Xcode archive completed"
         
         # Export IPA
