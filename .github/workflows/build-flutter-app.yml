@@ -241,25 +241,25 @@ jobs:
       run: |
         echo "=== Starting iOS Build ==="
         
-        # Recreate keychain for this step
-        echo "=== Recreating keychain ==="
+        # Create new keychain for this step
+        echo "=== Creating build2 keychain ==="
         # Delete existing keychain if it exists
-        security delete-keychain build.keychain 2>/dev/null || true
-        security create-keychain -p "" build.keychain
-        security default-keychain -s build.keychain
-        security unlock-keychain -p "" build.keychain
+        security delete-keychain build2.keychain 2>/dev/null || true
+        security create-keychain -p "" build2.keychain
+        security default-keychain -s build2.keychain
+        security unlock-keychain -p "" build2.keychain
         
         # Import certificate again
         echo "=== Re-importing certificate ==="
         echo "${{ secrets.P12_BASE64 }}" | base64 --decode > certificate.p12
-        security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
+        security import certificate.p12 -k build2.keychain -P "${{ secrets.P12_PASSWORD }}" -T /usr/bin/codesign
         
         # Set keychain partition list
-        security set-key-partition-list -S apple-tool:,apple:,codesign: -k "" build.keychain
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -k "" build2.keychain
         
         # Verify certificate
         echo "=== Available certificates ==="
-        security find-identity -v -p codesigning build.keychain
+        security find-identity -v -p codesigning build2.keychain
         # Set Bundle ID
         if [ -n "${{ inputs.bundle_id }}" ]; then
           echo "=== Using Bundle ID from input parameter ==="
@@ -292,7 +292,7 @@ jobs:
         sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' ios/Runner.xcodeproj/project.pbxproj
         
         # Get certificate identity
-        CERT_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Apple Distribution" | awk '{print $2}')
+        CERT_IDENTITY=$(security find-identity -v -p codesigning build2.keychain | grep "Apple Distribution" | awk '{print $2}')
         echo "Using Certificate Identity: $CERT_IDENTITY"
         
         # Get provisioning profile UUID
@@ -301,7 +301,7 @@ jobs:
         
         # Set keychain for Flutter
         echo "Setting keychain for Flutter..."
-        export KEYCHAIN_PATH=$(pwd)/build.keychain
+        export KEYCHAIN_PATH=$(pwd)/build2.keychain
         export KEYCHAIN_PASSWORD=""
         
         # Build Flutter iOS with manual code signing
@@ -314,7 +314,7 @@ jobs:
         cd ios
         
         # Get certificate identity
-        CERT_IDENTITY=$(security find-identity -v -p codesigning ~/Library/Keychains/build.keychain-db | grep "Apple Distribution" | awk '{print $2}')
+        CERT_IDENTITY=$(security find-identity -v -p codesigning ~/Library/Keychains/build2.keychain-db | grep "Apple Distribution" | awk '{print $2}')
         
         # Get provisioning profile UUID
         PROFILE_UUID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "UUID" | awk '{print $3}' | tr -d '"')
