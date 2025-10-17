@@ -229,10 +229,6 @@ jobs:
       run: |
         echo "=== Starting iOS Build ==="
         
-        # Check Flutter doctor
-        echo "Flutter doctor:"
-        flutter doctor -v
-        
         # Check available certificates before build
         echo "=== Available certificates before build ==="
         security find-identity -v -p codesigning build.keychain
