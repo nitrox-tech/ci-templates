@@ -324,8 +324,8 @@ jobs:
         echo "=== Provisioning Profile Details ==="
         security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p -
         
-        # Disable automatic code signing and remove provisioning profiles
-        echo "Disabling automatic code signing and removing provisioning profiles..."
+        # Disable automatic code signing and set manual signing
+        echo "Setting up manual code signing..."
         sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' ios/Runner.xcodeproj/project.pbxproj
         sed -i '' 's/PROVISIONING_PROFILE_SPECIFIER = .*;//' ios/Runner.xcodeproj/project.pbxproj
         sed -i '' 's/PROVISIONING_PROFILE = .*;//' ios/Runner.xcodeproj/project.pbxproj
@@ -339,15 +339,9 @@ jobs:
         echo "Setting DEVELOPMENT_TEAM for Runner target..."
         sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = S23HMD548J;/' ios/Runner.xcodeproj/project.pbxproj
         
-        # Disable automatic signing completely
-        echo "Disabling automatic signing completely..."
-        sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' ios/Runner.xcodeproj/project.pbxproj
-        sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
-        sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Distribution";/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
-        
-        # Set CODE_SIGN_IDENTITY to empty for manual signing
-        echo "Setting CODE_SIGN_IDENTITY to empty..."
-        sed -i '' 's/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = "";/' ios/Runner.xcodeproj/project.pbxproj
+        # Set CODE_SIGN_IDENTITY to Apple Distribution
+        echo "Setting CODE_SIGN_IDENTITY to Apple Distribution..."
+        sed -i '' 's/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = "Apple Distribution";/' ios/Runner.xcodeproj/project.pbxproj
         
         # Get certificate identity
         CERT_IDENTITY=$(security find-identity -v -p codesigning build2.keychain | grep "Apple Distribution" | awk '{print $2}')
@@ -384,6 +378,7 @@ jobs:
           -archivePath build/Runner.xcarchive \
           CODE_SIGN_STYLE=Manual \
           CODE_SIGN_IDENTITY="$CERT_IDENTITY" \
+          PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
           DEVELOPMENT_TEAM="S23HMD548J" \
           archive
         echo "✅ Xcode archive completed"
