@@ -152,9 +152,39 @@ jobs:
         echo "Installing CocoaPods..."
         pod install --repo-update
         
-        # Debug: Check if post_install worked
-        echo "=== Checking Pods deployment targets ==="
-        find Pods -name "*.pbxproj" -exec grep -l "IPHONEOS_DEPLOYMENT_TARGET" {} \; | head -5 | xargs -I {} sh -c 'echo "=== {} ===" && grep "IPHONEOS_DEPLOYMENT_TARGET" "{}" | head -3'
+        # Debug: Comprehensive certificate and profile check
+        echo "=== COMPREHENSIVE DEBUG START ==="
+        
+        # Check keychain status
+        echo "=== Keychain Status ==="
+        security list-keychains -d user
+        security show-keychain-info build2.keychain
+        
+        # Check certificate details
+        echo "=== Certificate Details ==="
+        security find-identity -v -p codesigning build2.keychain
+        security find-certificate -a -c "Apple Distribution" build2.keychain
+        
+        # Check provisioning profile
+        echo "=== Provisioning Profile Check ==="
+        ls -la ~/Library/MobileDevice/Provisioning\ Profiles/
+        security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep -E "(UUID|Name|ExpirationDate|TeamIdentifier)"
+        
+        # Check Bundle ID match
+        echo "=== Bundle ID Verification ==="
+        PROFILE_BUNDLE_ID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "application-identifier" | sed 's/.*S23HMD548J\.//' | tr -d '"' | tr -d ' ')
+        echo "Profile Bundle ID: $PROFILE_BUNDLE_ID"
+        echo "Expected Bundle ID: $BUNDLE_ID"
+        
+        # Check Xcode project settings
+        echo "=== Xcode Project Settings ==="
+        grep -E "(CODE_SIGN|DEVELOPMENT_TEAM|PROVISIONING_PROFILE)" ios/Runner.xcodeproj/project.pbxproj | head -10
+        
+        # Check Pods deployment targets
+        echo "=== Pods Deployment Targets ==="
+        find Pods -name "*.pbxproj" -exec grep -l "IPHONEOS_DEPLOYMENT_TARGET" {} \; | head -3 | xargs -I {} sh -c 'echo "=== {} ===" && grep "IPHONEOS_DEPLOYMENT_TARGET" "{}" | head -2'
+        
+        echo "=== COMPREHENSIVE DEBUG END ==="
 
     - name: Extract app version
       id: version
@@ -357,6 +387,28 @@ jobs:
         # Get provisioning profile UUID
         PROFILE_UUID=$(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision | plutil -p - | grep "UUID" | awk '{print $3}' | tr -d '"')
         echo "Using Provisioning Profile UUID: $PROFILE_UUID"
+        
+        # Final verification before build
+        echo "=== FINAL BUILD VERIFICATION ==="
+        echo "Certificate Identity: $CERT_IDENTITY"
+        echo "Provisioning Profile UUID: $PROFILE_UUID"
+        echo "Bundle ID: $BUNDLE_ID"
+        echo "Development Team: S23HMD548J"
+        
+        # Verify certificate exists
+        if [ -z "$CERT_IDENTITY" ]; then
+          echo "❌ ERROR: No Apple Distribution certificate found!"
+          security find-identity -v build2.keychain
+          exit 1
+        fi
+        
+        # Verify provisioning profile exists
+        if [ -z "$PROFILE_UUID" ]; then
+          echo "❌ ERROR: No provisioning profile UUID found!"
+          exit 1
+        fi
+        
+        echo "✅ All verifications passed, proceeding with build..."
         
         # Set keychain for Flutter
         echo "Setting keychain for Flutter..."
