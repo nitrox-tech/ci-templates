@@ -120,6 +120,10 @@ jobs:
         rm -rf Pods/
         rm -f Podfile.lock
         
+        # Deintegrate CocoaPods completely
+        echo "Deintegrating CocoaPods..."
+        pod deintegrate || true
+        
         # Update iOS deployment target to 13.0
         echo "Updating iOS deployment target to 13.0..."
         sed -i '' 's/platform :ios, .*/platform :ios, "13.0"/' Podfile
@@ -142,8 +146,11 @@ jobs:
         echo "=== Podfile content ==="
         cat Podfile
         
+        # Update CocoaPods specs and install
+        echo "Updating CocoaPods specs..."
         pod repo update
-        pod install
+        echo "Installing CocoaPods..."
+        pod install --repo-update
         
         # Debug: Check if post_install worked
         echo "=== Checking Pods deployment targets ==="
